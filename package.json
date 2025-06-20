@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "@privy-io/react-auth": "^2.14.2",
     "next": "15.3.3",
+    "paypal-rest-sdk": "^1.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
