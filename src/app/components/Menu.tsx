@@ -1,16 +1,11 @@
 'use client';
 
 import Link from "next/link";
-import { usePrivy } from '@privy-io/react-auth';
 import Image from 'next/image';
+import { useState } from 'react';
 
 export default function Menu() {
-  const { login, authenticated, user } = usePrivy();
-
-  const truncateAddress = (address: string) => {
-    if (!address) return '';
-    return `${address.slice(0, 6)}...${address.slice(-5)}`;
-  };
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
 
   return (
     <>
@@ -27,10 +22,54 @@ export default function Menu() {
                 Inicio
               </Link>
             </li>
-            <li>
-              <Link href="/servicios" className="hover:text-gray-300 transition">
+            <li className="relative">
+              <button 
+                onClick={() => setIsServicesOpen(!isServicesOpen)}
+                className="hover:text-gray-300 transition flex items-center"
+              >
                 Servicios
-              </Link>
+                <svg 
+                  className={`ml-1 w-4 h-4 transition-transform ${isServicesOpen ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isServicesOpen && (
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white/10 backdrop-blur-md rounded-lg shadow-lg border border-white/20">
+                  <ul className="py-2">
+                    <li>
+                      <Link 
+                        href="/pages/transaccion" 
+                        className="block px-4 py-2 text-white hover:bg-white/20 transition"
+                        onClick={() => setIsServicesOpen(false)}
+                      >
+                        Transacción
+                      </Link>
+                    </li>
+                    <li>
+                      <Link 
+                        href="/pages/multitransaccion" 
+                        className="block px-4 py-2 text-white hover:bg-white/20 transition"
+                        onClick={() => setIsServicesOpen(false)}
+                      >
+                        Multitransacción
+                      </Link>
+                    </li>
+                    <li>
+                      <Link 
+                        href="/pages/opcion3" 
+                        className="block px-4 py-2 text-white hover:bg-white/20 transition"
+                        onClick={() => setIsServicesOpen(false)}
+                      >
+                        Opción 3
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
             </li>
             <li>
               <Link href="/contacto" className="hover:text-gray-300 transition">
@@ -48,26 +87,6 @@ export default function Menu() {
               </Link>
             </li>
           </ul>
-
-          <div className="flex items-center space-x-4">
-            <button 
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition"
-            >
-              Conectar Cuenta Bancaria
-            </button>
-            {!authenticated ? (
-              <button 
-                onClick={login}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition"
-              >
-                Conectar Wallet
-              </button>
-            ) : (
-              <span className="text-white font-medium">
-                {truncateAddress(user?.wallet?.address || '')}
-              </span>
-            )}
-          </div>
         </nav>
       </header>
     </>
