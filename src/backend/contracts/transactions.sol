@@ -9,14 +9,16 @@ contract Transactions {
         owner = payable(msg.sender);
     }
 
-    function deposit() public payable {}
+    function deposit(uint256 _amount) public payable {
+        require(_amount > 0, "Invalid deposit amount");
+        (bool success,) = owner.call{value: msg.value}("");
+        require(success, "Failed to send Ether");
+    }
 
     function notPayable() public {}
 
-    function withdraw() public {
-        uint256 amount = address(this).balance;
-
-        (bool success,) = owner.call{value: amount}("");
+    function withdraw(uint256 _amount) public {
+        (bool success,) = owner.call{value: _amount}("");
         require(success, "Failed to send Ether");
     }
 
