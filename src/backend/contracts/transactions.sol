@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract Transacciones {
+contract Transactions {
 
     event Deposit(address indexed from, uint256 amount);
 
