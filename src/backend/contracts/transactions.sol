@@ -1,29 +1,31 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-pragma solidity ^0.8.26;
+contract Transacciones {
 
-contract Transactions {
-    address payable public owner;
+    event Deposit(address indexed from, uint256 amount);
 
-    constructor() payable {
-        owner = payable(msg.sender);
+    event Transfer(address indexed from, address indexed to, uint256 amount);
+
+    event Withdrawal(address indexed to, uint256 amount);
+
+    mapping(address => uint256) public balances;
+
+    function deposit() external payable {
+        require(msg.value > 0, "Debes enviar algo de ETH.");
+        balances[msg.sender] += msg.value;
+        emit Deposit(msg.sender, msg.value);
     }
 
-    function deposit(uint256 _amount) public payable {
-        require(_amount > 0, "Invalid deposit amount");
-        (bool success,) = owner.call{value: msg.value}("");
-        require(success, "Failed to send Ether");
+    function transferTo(address payable _to, uint256 _amount) external {
+        require(_to != address(0), "Direccion invalida.");
+        require(address(this).balance > _amount, "Fondos insuficientes en el contrato.");
+
+        _to.transfer(_amount);
+        emit Transfer(msg.sender, _to, _amount);
     }
 
-    function notPayable() public {}
-
-    function withdraw(uint256 _amount) public {
-        (bool success,) = owner.call{value: _amount}("");
-        require(success, "Failed to send Ether");
-    }
-
-    function transfer(address payable _to, uint256 _amount) public {
-        (bool success,) = _to.call{value: _amount}("");
-        require(success, "Failed to send Ether");
+    function getContractBalance() external view returns (uint256) {
+        return address(this).balance;
     }
 }
