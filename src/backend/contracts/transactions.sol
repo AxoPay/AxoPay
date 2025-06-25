@@ -4,11 +4,7 @@ pragma solidity ^0.8.0;
 contract Transactions {
 
     event Deposit(address indexed from, uint256 amount);
-
     event Transfer(address indexed from, address indexed to, uint256 amount);
-
-    event Withdrawal(address indexed to, uint256 amount);
-
     mapping(address => uint256) public balances;
 
     function deposit() external payable {
