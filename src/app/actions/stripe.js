@@ -1,27 +1,36 @@
 'use server'
 
-export async function fetchClientSecret() {
+export async function fetchClientSecret(email) {
   try {
-    const response = await fetch(new URL('/api/stripe', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'), {
+    const response = await fetch(new URL('/api/stripe', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').toString(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        action: 'fetchClientSecret'
-      })
-    })
+        action: 'fetchClientSecret',
+        data: { email }
+      }),
+      cache: 'no-store'
+    });
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Error al procesar la solicitud')
+      const errorData = await response.json();
+      console.error('Error response from server:', errorData);
+      throw new Error(errorData.error || 'Error al procesar la solicitud');
     }
 
-    const data = await response.json()
-    return data.clientSecret
+    const data = await response.json();
+    
+    if (!data.clientSecret) {
+      console.error('No client secret received:', data);
+      throw new Error('No se recibió el client secret');
+    }
+
+    return data.clientSecret;
   } catch (error) {
-    console.error('Error in fetchClientSecret:', error)
-    throw error
+    console.error('Error in fetchClientSecret:', error);
+    throw new Error('Error al inicializar el formulario de pago');
   }
 }
 

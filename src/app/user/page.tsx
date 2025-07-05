@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePrivy } from '@privy-io/react-auth'
 import Checkout from '../components/Checkout'
 import SavedCards from '../components/SavedCards'
 import { getCustomerCards } from '../actions/stripe'
+import Modal from '../components/Modal'
 
 export default function User() {
+  const { user } = usePrivy()
   const [showCheckout, setShowCheckout] = useState(false)
   const [cards, setCards] = useState([])
   const [loading, setLoading] = useState(true)
@@ -13,7 +16,7 @@ export default function User() {
 
   const loadCards = async () => {
     try {
-      const cards = await getCustomerCards()
+      const cards = await getCustomerCards(user?.email)
       setCards(cards)
       setError(null)
     } catch (err) {
@@ -25,8 +28,10 @@ export default function User() {
   }
 
   useEffect(() => {
-    loadCards()
-  }, [])
+    if (user?.email) {
+      loadCards()
+    }
+  }, [user?.email])
 
   const handleSuccess = async () => {
     setShowCheckout(false)
@@ -60,32 +65,18 @@ export default function User() {
           <SavedCards cards={cards} onUpdate={loadCards} />
         )}
 
-        {showCheckout && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-[#0A0F1C] rounded-lg shadow-xl max-w-md w-full relative">
-              <button
-                onClick={() => setShowCheckout(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-              <div className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Agregar Nueva Tarjeta</h2>
-                <Checkout onSuccess={handleSuccess} />
-              </div>
-            </div>
+        <Modal
+          isOpen={showCheckout}
+          onClose={() => setShowCheckout(false)}
+          title="Agregar Nueva Tarjeta"
+        >
+          <div className="w-full min-h-[400px]">
+            <Checkout 
+              email={user?.email} 
+              onSuccess={handleSuccess} 
+            />
           </div>
-        )}
+        </Modal>
       </div>
     </div>
   )

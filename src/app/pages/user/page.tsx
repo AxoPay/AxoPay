@@ -41,34 +41,34 @@ export default function User() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
               </svg>
             </div>
-          </div>
+        </div>
 
           <div className="flex justify-center items-start gap-8">
             {/* Card de Wallet */}
             <div className="bg-[#101829] w-[45%] rounded-2xl p-6 flex flex-col space-y-4">
               <div className="flex items-center space-x-3">
-                <Image src="/wallet.svg" alt="" className='text-white' width={24} height={24} />
-                <h3 className="text-white font-semibold text-lg">Wallet Digital</h3>
-              </div>
-              <div className="flex flex-col space-y-2">
+              <Image src="/wallet.svg" alt="" className='text-white' width={24} height={24} />
+              <h3 className="text-white font-semibold text-lg">Wallet Digital</h3>
+            </div>
+            <div className="flex flex-col space-y-2">
                 <div className='flex justify-between'>
-                  <p className="text-gray-400 text-sm">Dirección de Wallet</p>
+                <p className="text-gray-400 text-sm">Dirección de Wallet</p>
                   <button onClick={copyAddress} className="cursor-pointer" aria-label="Copy wallet address">
-                    <Image src="/copiar.svg" alt="" width={24} height={24} />
-                  </button>
-                </div>
-                <div className="bg-[#1e293b] text-white p-3 rounded-lg flex justify-evenly items-center">
+                  <Image src="/copiar.svg" alt="" width={24} height={24} />
+                </button>
+              </div>
+              <div className="bg-[#1e293b] text-white p-3 rounded-lg flex justify-evenly items-center">
                   <span className="text-base break-all">{walletAddress || 'No conectado'}</span>
-                </div>
-                {copied && <p className="text-green-400 text-sm mt-1">¡Copiado!</p>}
               </div>
-              
-              <div className="flex flex-col space-y-2">
-                <p className="text-gray-400 text-sm">Balance Disponible</p>
-                <div className="bg-[#1A2450] text-white p-3 rounded-lg flex justify-between items-center">
-                  <span className="text-lg font-bold">$2,450.75 MXNB</span>
-                </div>
+              {copied && <p className="text-green-400 text-sm mt-1">¡Copiado!</p>}
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <p className="text-gray-400 text-sm">Balance Disponible</p>
+              <div className="bg-[#1A2450] text-white p-3 rounded-lg flex justify-between items-center">
+                <span className="text-lg font-bold">$2,450.75 MXNB</span>
               </div>
+            </div>
               
               <button 
                 onClick={user ? handleLogout : login} 
@@ -100,10 +100,10 @@ export default function User() {
               >
                 Agregar Nueva Tarjeta
               </button>
-            </div>
+          </div>
           </div>
         </div>
-      </div>
+    </div>
 
       <Modal
         isOpen={showCheckout}

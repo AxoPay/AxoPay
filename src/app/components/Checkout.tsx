@@ -8,7 +8,7 @@ import type { Appearance } from '@stripe/stripe-js';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
+function CheckoutForm({ onSuccess, email }: { onSuccess: () => void; email?: string }) {
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -25,20 +25,31 @@ function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
     setError(null);
 
     try {
-      const { error: submitError } = await stripe.confirmSetup({
+      const { error: submitError, setupIntent } = await stripe.confirmSetup({
         elements,
+        redirect: 'if_required',
         confirmParams: {
-          return_url: `${window.location.origin}/return`
+          payment_method_data: {
+            billing_details: {
+              email: email || 'anonymous@example.com'
+            }
+          }
         }
       });
 
       if (submitError) {
+        console.error('Stripe submitError:', submitError);
         setError(submitError.message || 'Error al procesar la tarjeta');
         return;
       }
 
-      onSuccess();
+      if (setupIntent && setupIntent.status === 'succeeded') {
+        onSuccess();
+      } else {
+        setError('Error al procesar la tarjeta');
+      }
     } catch (err) {
+      console.error('Stripe exception:', err);
       setError('Error al procesar la tarjeta. Por favor intenta de nuevo.');
     } finally {
       setLoading(false);
@@ -52,11 +63,7 @@ function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
           options={{
             layout: 'tabs',
             fields: {
-              billingDetails: {
-                email: 'never',
-                phone: 'never',
-                address: 'never'
-              }
+              billingDetails: 'auto'
             },
             wallets: {
               applePay: 'never',
@@ -97,27 +104,43 @@ function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
-export default function Checkout({ onSuccess }: { onSuccess: () => void }) {
+interface CheckoutProps {
+  onSuccess: () => void;
+  email?: string;
+}
+
+export default function Checkout({ onSuccess, email }: CheckoutProps) {
   const [clientSecret, setClientSecret] = useState<string>();
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
     const initializePayment = async () => {
       try {
-        const secret = await fetchClientSecret();
+        setError(undefined);
+        const secret = await fetchClientSecret(email);
+        if (!secret) {
+          throw new Error('No se pudo obtener el client secret');
+        }
         setClientSecret(secret);
       } catch (err) {
-        setError('Error al inicializar el formulario de pago');
+        console.error('Error initializing payment:', err);
+        setError(err instanceof Error ? err.message : 'Error al inicializar el formulario de pago');
       }
     };
 
     initializePayment();
-  }, []);
+  }, [email]);
 
   if (error) {
     return (
       <div className="text-red-500 text-sm bg-red-500/10 p-3 rounded-lg">
         {error}
+        <button
+          onClick={() => window.location.reload()}
+          className="ml-2 underline hover:no-underline"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -179,12 +202,12 @@ export default function Checkout({ onSuccess }: { onSuccess: () => void }) {
     <Elements 
       stripe={stripePromise} 
       options={{ 
-        clientSecret, 
+        clientSecret,
         appearance,
         loader: 'auto'
       }}
     >
-      <CheckoutForm onSuccess={onSuccess} />
+      <CheckoutForm onSuccess={onSuccess} email={email} />
     </Elements>
   );
 }
