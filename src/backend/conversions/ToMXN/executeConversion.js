@@ -12,7 +12,7 @@ const JUNO_API_KEY = process.env.JUNO_API_KEY;
 
 const executeConversion = async () => {
     try {
-        const result = await requestConversion("usd", 10);
+        const result = await requestConversion("btc", 0.000001);
         const endpoint = `/api/v4/currency_conversions/${result}`;
         const url = "https://stage.bitso.com" + endpoint;
         const method = "PUT";
