@@ -47,16 +47,25 @@ function CheckoutForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement
-        options={{
-          layout: 'tabs',
-          fields: {
-            billingDetails: {
-              email: 'never'
+      <div className="w-full">
+        <PaymentElement
+          options={{
+            layout: 'tabs',
+            fields: {
+              billingDetails: {
+                email: 'never',
+                phone: 'never',
+                address: 'never'
+              }
+            },
+            wallets: {
+              applePay: 'never',
+              googlePay: 'never'
             }
-          }
-        }}
-      />
+          }}
+          className="w-full [&_*]:!max-w-full [&_iframe]:!w-full"
+        />
+      </div>
 
       {error && (
         <div className="text-red-500 text-sm bg-red-500/10 p-3 rounded-lg">
@@ -155,15 +164,26 @@ export default function Checkout({ onSuccess }: { onSuccess: () => void }) {
       '.Input': {
         backgroundColor: '#1e293b',
         borderColor: '#334155',
+        maxWidth: '100%'
       },
       '.Input:focus': {
         borderColor: '#3b82f6',
+      },
+      '.Input--invalid': {
+        borderColor: '#ef4444',
       }
     }
   };
 
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
+    <Elements 
+      stripe={stripePromise} 
+      options={{ 
+        clientSecret, 
+        appearance,
+        loader: 'auto'
+      }}
+    >
       <CheckoutForm onSuccess={onSuccess} />
     </Elements>
   );

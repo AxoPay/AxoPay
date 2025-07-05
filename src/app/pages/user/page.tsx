@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Image from 'next/image';
 import Checkout from '../../components/Checkout';
+import Modal from '../../components/Modal';
 
 export default function User() {
   const { user, logout, login } = usePrivy();
@@ -104,35 +105,15 @@ export default function User() {
         </div>
       </div>
 
-      {/* Modal de Checkout */}
-      {showCheckout && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-[#101829] rounded-2xl shadow-2xl max-w-md w-full relative border border-gray-700">
-            <div className="absolute top-4 right-4">
-              <button
-                onClick={() => setShowCheckout(false)}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-            <div className="p-8">
-              <h2 className="text-2xl font-semibold mb-6 text-white">Agregar Nueva Tarjeta</h2>
-              <Checkout onSuccess={() => setShowCheckout(false)} />
-            </div>
-          </div>
+      <Modal
+        isOpen={showCheckout}
+        onClose={() => setShowCheckout(false)}
+        title="Agregar Nueva Tarjeta"
+      >
+        <div className="w-full min-h-[400px]">
+          <Checkout onSuccess={() => setShowCheckout(false)} />
         </div>
-      )}
+      </Modal>
     </main>
   );
 } 

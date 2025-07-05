@@ -3,3 +3,19 @@
 body{
   background: #050b15;
 }
+
+/* Ocultar barra de scroll pero mantener funcionalidad */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Asegurar que los iframes de Stripe se ajusten correctamente */
+iframe {
+  max-width: 100% !important;
+  width: 100% !important;
+}
