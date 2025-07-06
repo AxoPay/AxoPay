@@ -8,7 +8,12 @@ import type { Appearance } from '@stripe/stripe-js';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-function CheckoutForm({ onSuccess, email }: { onSuccess: () => void; email?: string }) {
+interface CheckoutFormProps {
+  onSuccess: (paymentMethod: any) => void;
+  email?: string;
+}
+
+function CheckoutForm({ onSuccess, email }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +48,25 @@ function CheckoutForm({ onSuccess, email }: { onSuccess: () => void; email?: str
         return;
       }
 
-      if (setupIntent && setupIntent.status === 'succeeded') {
-        onSuccess();
+      if (setupIntent && setupIntent.status === 'succeeded' && setupIntent.payment_method) {
+        // Obtener los detalles del payment method usando la API del servidor
+        const response = await fetch('/api/stripe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'getPaymentMethod',
+            data: { paymentMethodId: setupIntent.payment_method }
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          onSuccess(data.paymentMethod);
+        } else {
+          onSuccess(null);
+        }
       } else {
         setError('Error al procesar la tarjeta');
       }
@@ -105,7 +127,7 @@ function CheckoutForm({ onSuccess, email }: { onSuccess: () => void; email?: str
 }
 
 interface CheckoutProps {
-  onSuccess: () => void;
+  onSuccess: (paymentMethod: any) => void;
   email?: string;
 }
 

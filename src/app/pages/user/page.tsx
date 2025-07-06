@@ -2,17 +2,51 @@
 
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Checkout from '../../components/Checkout';
 import Modal from '../../components/Modal';
+import SavedCards from '../../components/SavedCards';
+import { getCustomerCards, disconnectCard } from '../../actions/stripe';
+
+interface Card {
+  id: string;
+  brand: string;
+  last4: string;
+  expMonth: number;
+  expYear: number;
+  cardType: string;
+  country: string;
+  name: string | null;
+}
 
 export default function User() {
-  const { user, logout, login } = usePrivy();
+  const { user, logout } = usePrivy();
   const router = useRouter();
   const walletAddress = user?.wallet?.address || '';
   const [copied, setCopied] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [cards, setCards] = useState<Card[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadCards = async () => {
+    if (!user?.email) return;
+    try {
+      setIsLoading(true);
+      const loadedCards = await getCustomerCards(user.email.toString());
+      setCards(loadedCards);
+    } catch (err) {
+      console.error('Error loading cards:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.email) {
+      loadCards();
+    }
+  }, [user?.email]);
 
   const handleLogout = () => {
     logout();
@@ -21,13 +55,26 @@ export default function User() {
 
   const copyAddress = () => {
     if (walletAddress) {
-      try {
-        navigator.clipboard.writeText(walletAddress);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000); 
-      } catch (err) {
-        console.error('Failed to copy address: ', err);
-      }
+      navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleSuccess = async (paymentMethod: any) => {
+    setShowCheckout(false);
+    if (paymentMethod) {
+      setCards(prevCards => [...prevCards, paymentMethod]);
+      await loadCards();
+    }
+  };
+
+  const handleDisconnectCard = async (cardId: string) => {
+    try {
+      await disconnectCard(cardId);
+      await loadCards();
+    } catch (error) {
+      console.error('Error al desconectar la tarjeta:', error);
     }
   };
 
@@ -41,42 +88,41 @@ export default function User() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
               </svg>
             </div>
-        </div>
+          </div>
 
           <div className="flex justify-center items-start gap-8">
             {/* Card de Wallet */}
-            <div className="bg-[#101829] w-[45%] rounded-2xl p-6 flex flex-col space-y-4">
-              <div className="flex items-center space-x-3">
-              <Image src="/wallet.svg" alt="" className='text-white' width={24} height={24} />
-              <h3 className="text-white font-semibold text-lg">Wallet Digital</h3>
-            </div>
-            <div className="flex flex-col space-y-2">
-                <div className='flex justify-between'>
-                <p className="text-gray-400 text-sm">Dirección de Wallet</p>
-                  <button onClick={copyAddress} className="cursor-pointer" aria-label="Copy wallet address">
-                  <Image src="/copiar.svg" alt="" width={24} height={24} />
-                </button>
+            <div className="bg-[#101829] rounded-2xl p-6 w-[45%]">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <Image src="/wallet.svg" alt="" width={24} height={24} />
+                  <h3 className="text-white font-semibold text-lg">Mi Wallet</h3>
+                </div>
               </div>
-              <div className="bg-[#1e293b] text-white p-3 rounded-lg flex justify-evenly items-center">
-                  <span className="text-base break-all">{walletAddress || 'No conectado'}</span>
+
+              <div className="bg-[#0A0F1C] rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Dirección</span>
+                  <button
+                    onClick={copyAddress}
+                    className="text-blue-500 hover:text-blue-600 transition-colors"
+                  >
+                    <Image src="/copiar.svg" alt="Copiar" width={20} height={20} />
+                  </button>
+                </div>
+                <p className="text-sm font-mono mt-1 break-all">
+                  {walletAddress || 'No wallet connected'}
+                </p>
+                {copied && (
+                  <span className="text-green-500 text-sm block mt-1">¡Copiado!</span>
+                )}
               </div>
-              {copied && <p className="text-green-400 text-sm mt-1">¡Copiado!</p>}
-            </div>
-            
-            <div className="flex flex-col space-y-2">
-              <p className="text-gray-400 text-sm">Balance Disponible</p>
-              <div className="bg-[#1A2450] text-white p-3 rounded-lg flex justify-between items-center">
-                <span className="text-lg font-bold">$2,450.75 MXNB</span>
-              </div>
-            </div>
-              
-              <button 
-                onClick={user ? handleLogout : login} 
-                className={`${
-                  user ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
-                } text-white font-semibold py-2 px-4 rounded transition cursor-pointer w-full`}
+
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition w-full"
               >
-                {user ? 'Desconectar Wallet' : 'Conectar Wallet'}
+                Cerrar Sesión
               </button>
             </div>
 
@@ -89,21 +135,22 @@ export default function User() {
                 </div>
               </div>
 
-              <div className="text-gray-400 text-center p-8">
-                <p>No hay tarjetas guardadas</p>
-                <p className="mt-2 text-sm">Haz clic en "Agregar Nueva Tarjeta" para comenzar</p>
-              </div>
-
-              <button
-                onClick={() => setShowCheckout(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition w-full mt-4"
-              >
-                Agregar Nueva Tarjeta
-              </button>
-          </div>
+              {cards.length > 0 ? (
+                <SavedCards cards={cards} onDisconnect={handleDisconnectCard} />
+              ) : (
+                <div className="text-center p-4">
+                  <button
+                    onClick={() => setShowCheckout(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition w-full"
+                  >
+                    Conectar Tarjeta
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-    </div>
+      </div>
 
       <Modal
         isOpen={showCheckout}
@@ -111,7 +158,7 @@ export default function User() {
         title="Agregar Nueva Tarjeta"
       >
         <div className="w-full min-h-[400px]">
-          <Checkout onSuccess={() => setShowCheckout(false)} />
+          <Checkout onSuccess={handleSuccess} email={user?.email?.toString()} />
         </div>
       </Modal>
     </main>

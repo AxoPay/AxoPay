@@ -58,6 +58,49 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: errorMessage }, { status: 500 });
         }
 
+      case 'disconnectCard':
+        try {
+          const { cardId } = data;
+          if (!cardId) {
+            return NextResponse.json({ error: 'ID de tarjeta no proporcionado' }, { status: 400 });
+          }
+
+          await stripe.paymentMethods.detach(cardId);
+          
+          return NextResponse.json({ success: true });
+        } catch (error) {
+          console.error('Error disconnecting card:', error);
+          const errorMessage = await handleStripeError(error);
+          return NextResponse.json({ error: errorMessage }, { status: 500 });
+        }
+
+      case 'getPaymentMethod':
+        try {
+          const { paymentMethodId } = data;
+          if (!paymentMethodId) {
+            return NextResponse.json({ error: 'ID del método de pago no proporcionado' }, { status: 400 });
+          }
+
+          const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+          
+          return NextResponse.json({ 
+            paymentMethod: {
+              id: paymentMethod.id,
+              brand: paymentMethod.card?.brand || 'unknown',
+              last4: paymentMethod.card?.last4 || '****',
+              expMonth: paymentMethod.card?.exp_month || 0,
+              expYear: paymentMethod.card?.exp_year || 0,
+              cardType: paymentMethod.card?.funding || 'unknown',
+              country: paymentMethod.card?.country || 'unknown',
+              name: paymentMethod.billing_details?.name || null
+            }
+          });
+        } catch (error) {
+          console.error('Error getting payment method:', error);
+          const errorMessage = await handleStripeError(error);
+          return NextResponse.json({ error: errorMessage }, { status: 500 });
+        }
+
       default:
         return NextResponse.json(
           { error: 'Acción no soportada' },

@@ -10,10 +10,17 @@ interface Card {
   last4: string
   expMonth: number
   expYear: number
+  cardType: string
+  country: string
+  name: string | null
 }
 
-export default function SavedCards() {
-  const [cards, setCards] = useState<Card[]>([])
+interface SavedCardsProps {
+  cards: Card[]
+  onDisconnect: (cardId: string) => void
+}
+
+export default function SavedCards({ cards, onDisconnect }: SavedCardsProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string>()
 
@@ -22,7 +29,6 @@ export default function SavedCards() {
       setIsLoading(true)
       const savedCards = await getCustomerCards()
       console.log('Loaded cards:', savedCards)
-      setCards(savedCards)
     } catch (error) {
       console.error('Error loading cards:', error)
       setError('No se pudieron cargar las tarjetas guardadas')
@@ -35,14 +41,31 @@ export default function SavedCards() {
     loadCards()
   }, [])
 
-  const getCardIcon = (brand: string) => {
+  const getBrandIcon = (brand: string) => {
     switch (brand.toLowerCase()) {
       case 'visa':
-        return '💳' // Reemplazar con el ícono real de Visa
+        return '💳'
       case 'mastercard':
-        return '💳' // Reemplazar con el ícono real de Mastercard
+        return '💳'
+      case 'amex':
+        return '💳'
       default:
         return '💳'
+    }
+  }
+
+  const formatExpiryDate = (month: number, year: number) => {
+    return `${month.toString().padStart(2, '0')}/${year.toString().slice(-2)}`
+  }
+
+  const getCardTypeText = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'credit':
+        return 'Crédito'
+      case 'debit':
+        return 'Débito'
+      default:
+        return type
     }
   }
 
@@ -68,39 +91,65 @@ export default function SavedCards() {
     )
   }
 
+  if (cards.length === 0) {
+    return (
+      <div className="text-gray-400 text-center p-8">
+        <p>No hay tarjetas guardadas</p>
+        <p className="mt-2 text-sm">Haz clic en "Agregar Nueva Tarjeta" para comenzar</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
-      {cards.length === 0 ? (
-        <p className="text-gray-400 text-center">No hay tarjetas guardadas</p>
-      ) : (
-        cards.map((card) => (
-          <div
-            key={card.id}
-            className="bg-[#1e293b] rounded-lg p-4 flex items-center justify-between"
-          >
-            <div className="flex items-center space-x-3">
-              <span className="text-2xl">{getCardIcon(card.brand)}</span>
+      {cards.map((card) => (
+        <div
+          key={card.id}
+          className="bg-[#0A0F1C] rounded-lg p-4"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-4">
+              <span className="text-2xl">{getBrandIcon(card.brand)}</span>
               <div>
                 <p className="text-white font-medium">
                   •••• •••• •••• {card.last4}
                 </p>
                 <p className="text-gray-400 text-sm">
-                  Expira: {card.expMonth.toString().padStart(2, '0')}/{card.expYear}
+                  Expira: {formatExpiryDate(card.expMonth, card.expYear)}
                 </p>
               </div>
             </div>
             <button
-              className="text-red-500 hover:text-red-600 text-sm"
-              onClick={() => {
-                // Implementar eliminación de tarjeta
-                console.log('Eliminar tarjeta:', card.id)
-              }}
+              onClick={() => onDisconnect(card.id)}
+              className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-4 rounded transition"
             >
-              Eliminar
+              Desconectar
             </button>
           </div>
-        ))
-      )}
+          <div className="border-t border-gray-700 pt-3 mt-3">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <p className="text-gray-400">Tipo</p>
+                <p className="text-white">{getCardTypeText(card.cardType)}</p>
+              </div>
+              {card.name && (
+                <div>
+                  <p className="text-gray-400">Titular</p>
+                  <p className="text-white">{card.name}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-gray-400">País</p>
+                <p className="text-white">{card.country.toUpperCase()}</p>
+              </div>
+              <div>
+                <p className="text-gray-400">Marca</p>
+                <p className="text-white capitalize">{card.brand}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 } 

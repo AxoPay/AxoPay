@@ -41,7 +41,7 @@ export async function getCustomerCards(email) {
       return []
     }
 
-    const response = await fetch(new URL('/api/stripe', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'), {
+    const response = await fetch(new URL('/api/stripe', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').toString(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,7 +49,8 @@ export async function getCustomerCards(email) {
       body: JSON.stringify({
         action: 'getCustomerCards',
         data: { email }
-      })
+      }),
+      cache: 'no-store'
     })
 
     if (!response.ok) {
@@ -63,10 +64,39 @@ export async function getCustomerCards(email) {
       brand: pm.card.brand,
       last4: pm.card.last4,
       expMonth: pm.card.exp_month,
-      expYear: pm.card.exp_year
+      expYear: pm.card.exp_year,
+      cardType: pm.card.funding, // 'credit' o 'debit'
+      country: pm.card.country,
+      name: pm.billing_details?.name || null
     }))
   } catch (error) {
     console.error('Error in getCustomerCards:', error)
     throw error
+  }
+}
+
+export async function disconnectCard(cardId) {
+  try {
+    const response = await fetch(new URL('/api/stripe', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'disconnectCard',
+        data: { cardId }
+      }),
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error al desconectar la tarjeta');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error in disconnectCard:', error);
+    throw error;
   }
 }
