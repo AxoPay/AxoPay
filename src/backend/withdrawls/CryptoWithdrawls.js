@@ -111,4 +111,8 @@ const withdrawl = async (currency, to, amount) => {
     }
 };
 
-withdrawl("btc", "tu_direccion_btc_aqui", 0.0001);
+//withdrawl("btc", "tu_direccion_btc_aqui", 0.0001);
+
+module.exports = {
+    withdrawl,
+};
